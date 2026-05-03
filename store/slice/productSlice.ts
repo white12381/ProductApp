@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import ProductType, { ProductInput } from "@/type/productType";
 import { Alert } from "react-native";
 import { RootState } from "..";
@@ -10,15 +10,7 @@ type ProductState = {
 
 const initialState: ProductState = {
   products: [
-    {
-      createdAt: "2024-06-16T12:00:00Z",
-      id: 1,
-      image:
-        "file:///data/user/0/host.exp.exponent/cache/ImagePicker/8e8a5505-68bb-4d48-b742-5f23d0498be9.jpeg",
-      price: 19.99,
-      productName: "Sample Product 1",
-      updatedAt: "2024-06-16T12:00:00Z",
-    },
+   
   ],
   singleProduct: null,
 };
@@ -79,7 +71,14 @@ export const {
 } = productSlice.actions;
 export default productSlice.reducer;
 
-export const getProducts = (search: string) => (state: RootState) =>
-  state.product.products.filter((p) =>
-    p.productName.toLowerCase().includes(search.toLowerCase()),
-  ) || [];
+
+
+
+export const getProducts = (search: string) =>
+  createSelector(
+    (state: RootState) => state.product.products,
+    (products) =>
+      products.filter((p) =>
+        p.productName.toLowerCase().includes(search.toLowerCase())
+      ) ?? []
+  );
