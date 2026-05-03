@@ -1,44 +1,18 @@
-ProductApp Analysis
+const fs = require('fs');
+const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 
-INSTALLATION ON MOBILE DEVICE
+const text = `ProductApp Analysis
 
-1. Install Node.js and npm on your computer.
-2. Install Expo CLI globally if you do not already have it:
-   ```bash
-   npm install -g expo-cli
-   ```
-3. Clone the repository from GitHub:
-   ```bash
-   git clone https://github.com/white12381/ProductApp.git
-   ```
-4. Change into the project directory:
-   ```bash
-   cd ProductApp
-   ```
-5. Install project dependencies:
-   ```bash
-   npm install
-   ```
-6. Start the Expo development server:
-   ```bash
-   npm start
-   ```
-7. Install Expo Go on your mobile device:
-   - Android: Install Expo Go from the Google Play Store.
-   - iOS: Install Expo Go from the App Store.
-8. Open Expo Go on your device and scan the QR code shown in the terminal or browser.
-9. The app will load on your mobile device. If prompted, allow the connection and wait for the bundle to finish loading.
-
-10. PROJECT OVERVIEW
+1. PROJECT OVERVIEW
 
 - What is this application about?
-  This is a ProductApp, a React Native mobile application built with Expo that allows users to manage a simple product catalog. Users can add products with names, prices, and images; view products in a searchable list; edit existing products; and delete products.
+This is a ProductApp, a React Native mobile application built with Expo that allows users to manage a simple product catalog. Users can add products with names, prices, and images; view products in a searchable list; edit existing products; and delete products.
 
 - What problem does it solve?
-  It provides a local product management experience for mobile users who need a small inventory catalog system without external backend dependencies.
+It provides a local product management experience for mobile users who need a small inventory catalog system without external backend dependencies.
 
 - Overall architecture pattern used?
-  The app uses a feature-based architecture centered on products, with separation between UI components, Redux state management, type definitions, and app navigation.
+The app uses a feature-based architecture centered on products, with separation between UI components, Redux state management, type definitions, and app navigation.
 
 2. FOLDER STRUCTURE EXPLANATION
 
@@ -53,8 +27,8 @@ INSTALLATION ON MOBILE DEVICE
   - tsconfig.json: TypeScript config with strict mode and path alias.
 
 - app/ Directory:
-  - \_layout.tsx: Root layout providing Redux store, SafeAreaProvider, GestureHandlerRootView, and Stack navigation.
-  - (drawer)/\_layout.tsx: Drawer layout and screen options.
+  - _layout.tsx: Root layout providing Redux store, SafeAreaProvider, GestureHandlerRootView, and Stack navigation.
+  - (drawer)/_layout.tsx: Drawer layout and screen options.
   - (drawer)/index.tsx: Home screen with search input and product list.
   - (drawer)/uploadProducts.tsx: Product upload/edit screen with form and image picker.
 
@@ -87,7 +61,7 @@ INSTALLATION ON MOBILE DEVICE
 
 - Routing:
   - Expo Router file-based routing.
-  - Drawer navigation in app/(drawer)/\_layout.tsx.
+  - Drawer navigation in app/(drawer)/_layout.tsx.
   - Dynamic editing route parameter: ?id=.
 
 - Authentication/authorization:
@@ -133,3 +107,69 @@ INSTALLATION ON MOBILE DEVICE
 - Edit form preloads existing product data from getProductById.
 - Drawer header shows product count dynamically.
 - Image picker supports both camera and gallery.
+`;
+
+async function createPdf() {
+  const pdfDoc = await PDFDocument.create();
+  let page = pdfDoc.addPage([595.28, 841.89]);
+  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const fontSize = 10;
+  const pageWidth = page.getWidth();
+  const margin = 50;
+  const maxWidth = pageWidth - margin * 2;
+  const lines = wrapText(text, timesRomanFont, fontSize, maxWidth);
+  let y = page.getHeight() - margin;
+
+  for (const line of lines) {
+    if (y < margin + fontSize) {
+      page = pdfDoc.addPage([595.28, 841.89]);
+      y = page.getHeight() - margin;
+    }
+    page.drawText(line, {
+      x: margin,
+      y: y,
+      size: fontSize,
+      font: timesRomanFont,
+      color: rgb(0, 0, 0),
+    });
+    y -= fontSize + 4;
+  }
+
+  const pdfBytes = await pdfDoc.save();
+  fs.writeFileSync('ProductApp_analysis.pdf', pdfBytes);
+  console.log('PDF written to ProductApp_analysis.pdf');
+}
+
+function wrapText(text, font, fontSize, maxWidth) {
+  const paragraphs = text.split('\n');
+  const lines = [];
+
+  for (const paragraph of paragraphs) {
+    if (paragraph === '') {
+      lines.push('');
+      continue;
+    }
+    const words = paragraph.split(' ');
+    let line = '';
+
+    for (const word of words) {
+      const testLine = line.length === 0 ? word : `${line} ${word}`;
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+      if (testWidth > maxWidth && line.length > 0) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line.length > 0) {
+      lines.push(line);
+    }
+  }
+  return lines;
+}
+
+createPdf().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

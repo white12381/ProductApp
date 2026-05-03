@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities{
+    .input{
+        @apply w-full border border-primary outline-none p-4 rounded-md block;
+    }
+    .label{
+        @apply mb-1 font-semibold;
+    }
+    .error{
+        @apply text-red-900 text-center text-base my-2 font-semibold;
+    }
+}
